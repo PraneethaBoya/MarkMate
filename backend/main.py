@@ -70,7 +70,10 @@ class AdminExportResponse(BaseModel):
 def register(username: str, password: str, db: Session = Depends(get_db)):
     if db.query(User).filter(User.username == username).first():
         raise HTTPException(status_code=400, detail="Username already exists")
-    user = User(username=username, password_hash=get_password_hash(password))
+    # Bootstrap: if there is no administrator yet, first registered user becomes admin
+    is_first_admin = db.query(User).filter(User.role == "administrator").first() is None
+    role = "administrator" if is_first_admin else "student"
+    user = User(username=username, password_hash=get_password_hash(password), role=role)
     db.add(user)
     db.commit()
     db.refresh(user)
