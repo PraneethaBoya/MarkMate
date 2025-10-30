@@ -266,61 +266,48 @@
       hTxt.innerText = h;
       const note = document.getElementById('estimateMsg');
       note.innerText = '';
+      
+      // Simple client-side estimation based on study hours
+      // Base marks: 40, each hour adds ~7 marks, capped at 100
+      const baseMarks = 40;
+      const marksPerHour = 7;
+      let estimatedMarks = Math.min(100, Math.round(baseMarks + (h * marksPerHour)));
+      
+      // Probability based on marks (simple sigmoid-like function)
+      // Below 50: low probability, 50-70: medium, 70+: high
+      let probability = 0;
+      if (estimatedMarks < 50) {
+        probability = Math.round(estimatedMarks * 0.8); // 0-40%
+      } else if (estimatedMarks < 70) {
+        probability = Math.round(40 + ((estimatedMarks - 50) * 2)); // 40-80%
+      } else {
+        probability = Math.round(80 + ((estimatedMarks - 70) * 0.67)); // 80-100%
+      }
+      probability = Math.min(100, Math.max(0, probability));
+      
+      // Try to get backend estimate for more accuracy
       try{
-        const r = await fetch(`${API}/estimate`, {method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body: JSON.stringify({planned_hours:h})});
-        if(!r.ok){
-          // Backend error — fallback to latest metrics if present
-          const lm = window.lastStudentMetrics || {};
-          const fp = Math.round(((lm.pass_probability ?? 0)*100));
-          const fm = Math.round(lm.predicted_next_exam ?? ((lm.avg_percent ?? 0)*100));
-          estProb.innerText = Number.isFinite(fp) && fp>0 ? `${fp}%` : '--%';
-          estMarks.innerText = Number.isFinite(fm) && fm>0 ? `${fm} / 100` : '--/100';
-          note.innerText = `No estimate available (server response ${r.status}). Showing latest metrics.`;
-          // proceed to apply monotonic adjustment below
-        } else {
+        const r = await fetch(`${API}/estimate`, {
+          method:'POST', 
+          headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, 
+          body: JSON.stringify({planned_hours:h})
+        });
+        if(r.ok){
           const j = await r.json();
-          const p = Math.round((j.probability ?? j.pass_probability ?? 0)*100);
-          estProb.innerText = Number.isFinite(p) ? `${p}%` : '--%';
-          const m = Math.round(
-            (j.estimated_marks ?? j.marks ?? j.predicted_next ?? j.predicted_next_exam ?? (j.probability??0)*100)
-          );
-          estMarks.innerText = Number.isFinite(m) ? `${m} / 100` : '--/100';
-          if(!Number.isFinite(p) || !Number.isFinite(m)){
-            // Fallback from latest metrics if API did not return fields
-            const lm = window.lastStudentMetrics || {};
-            const fp2 = Math.round(((lm.pass_probability ?? 0)*100));
-            const fm2 = Math.round(lm.predicted_next_exam ?? lm.avg_percent*100 ?? 0);
-            if(!Number.isFinite(p) && Number.isFinite(fp2)) estProb.innerText = `${fp2}%`;
-            if(!Number.isFinite(m) && Number.isFinite(fm2)) estMarks.innerText = `${fm2} / 100`;
-            note.innerText = 'Using latest metrics as fallback for display.';
+          const backendProb = Math.round((j.probability ?? 0)*100);
+          if(Number.isFinite(backendProb) && backendProb > 0){
+            probability = backendProb;
+            // Adjust marks based on backend probability
+            estimatedMarks = Math.round(backendProb * 0.95); // Rough conversion
           }
         }
-      }catch(e){ /* noop */ }
-
-      // Monotonic increase w.r.t hours on the client
-      // Parse current displayed numbers
-      const getNum = (el, def=0)=>{ const m = (el.textContent||'').match(/\d+/); return m? Number(m[0]) : def; };
-      const currentM = getNum(estMarks, 0);
-      const currentP = getNum(estProb, 0);
-      // Baseline and slope for fallback when API fails or decreases
-      const lm = window.lastStudentMetrics || {};
-      const baseM = Math.max(0, Math.min(100, Math.round(lm.predicted_next_exam ?? (lm.avg_percent??0)*100 ?? 50)));
-      const slope = 5; // marks per hour
-      const candidateM = Math.max(baseM, Math.round(baseM + slope * h));
-      const shownM = getNum(estMarks, 0);
-      let nextM = Math.max(shownM, candidateM);
-      nextM = Math.min(100, nextM);
-      if(!Number.isFinite(shownM) || shownM===0){ nextM = candidateM; }
-      // Only enforce monotonic when hours increased compared to last measured
-      const lastH = window._lastPlannedHours ?? 0;
-      if(h >= lastH){
-        estMarks.innerText = `${nextM} / 100`;
-        const nextP = Math.min(100, Math.max(currentP, Math.round(nextM))); // tie prob to marks if needed
-        estProb.innerText = `${nextP}%`;
+      }catch(e){ 
+        // Use client-side calculation if backend fails
       }
-      window._lastPlannedHours = h;
-      window._lastEstMarks = getNum(estMarks, nextM);
-      window._lastEstProb = getNum(estProb, currentP);
+      
+      // Update display
+      estMarks.innerText = `${estimatedMarks} / 100`;
+      estProb.innerText = `${probability}%`;
     }
     hours.oninput = estimate;
 
