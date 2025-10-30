@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MarkMate · Login</title>
+  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%231f2937"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="700" fill="white">MM</text></svg>' />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .animate-float { animation: float 3s ease-in-out infinite; }
+    @keyframes float { 
+      0%, 100% { transform: translate(-50%, 0px); } 
+      50% { transform: translate(-50%, -15px); } 
+    }
+  </style>
+ </head>
+ <body class="min-h-screen text-white bg-gradient-to-br from-gray-900 via-gray-800 to-slate-900 relative overflow-hidden">
+  <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_40%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.06),transparent_45%),radial-gradient(circle_at_50%_80%,rgba(255,255,255,0.05),transparent_40%)]"></div>
+  <main class="min-h-screen flex items-center justify-center p-6">
+    <div class="relative w-full max-w-md">
+      <div class="absolute -top-14 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full bg-blue-600/30 backdrop-blur-2xl border-2 border-blue-300/50 flex items-center justify-center shadow-2xl animate-float z-50">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0z"/><path d="M12 14c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z"/></svg>
+      </div>
+      <div class="backdrop-blur-2xl bg-white/5 border border-white/10 rounded-3xl shadow-2xl p-7 pt-16">
+        <div class="flex items-center justify-center gap-2 mb-2">
+          <svg class="w-9 h-9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect width="24" height="24" rx="6" fill="#2563eb"/>
+            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="11" font-weight="700" fill="white" font-family="Arial,Helvetica,sans-serif">MM</text>
+          </svg>
+          <span class="text-white font-semibold tracking-wide">MarkMate</span>
+        </div>
+        <h2 class="text-center text-white font-semibold mb-6 tracking-wide">Welcome</h2>
+        <div class="space-y-3 text-sm">
+          <div class="flex items-center gap-2 bg-white/10 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-400 focus-within:shadow-lg transition-all">
+            <div class="px-3 py-3 bg-white/20 text-gray-200">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z"/></svg>
+            </div>
+            <input id="username" placeholder="Username" required class="flex-1 bg-transparent outline-none px-3 py-3 placeholder-gray-300 text-white focus:outline-none"/>
+          </div>
+          <div class="flex items-center gap-2 bg-white/10 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-400 focus-within:shadow-lg transition-all">
+            <div class="px-3 py-3 bg-white/20 text-gray-200">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15c1.657 0 3-1.343 3-3V8a3 3 0 10-6 0v4c0 1.657 1.343 3 3 3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 11h12v7a2 2 0 01-2 2H8a2 2 0 01-2-2v-7z"/></svg>
+            </div>
+            <input id="password" placeholder="Password" type="password" required class="flex-1 bg-transparent outline-none px-3 py-3 placeholder-gray-300 text-white focus:outline-none"/>
+          </div>
+          <div class="flex items-center justify-between text-white/80 text-xs">
+            <label class="inline-flex items-center gap-2"><input id="remember" type="checkbox" class="accent-blue-500"><span>Remember me</span></label>
+            <a href="#" class="hover:underline text-white/80">Forgot Password?</a>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+            <button id="login" class="w-full py-2.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold tracking-wide shadow-md hover:shadow-lg transition-all transform hover:scale-[1.02]">LOGIN</button>
+            <button id="register" class="w-full py-2.5 rounded-md bg-gray-700 hover:bg-gray-600 text-white font-medium shadow-md hover:shadow-lg transition-all transform hover:scale-[1.02]">Register</button>
+          </div>
+          <div class="text-center text-[13px] text-white/80 mt-1">Don’t have an account? <a id="signUpLink" href="#" class="underline">Sign Up</a></div>
+          <div id="msg" class="mt-1 text-xs text-white/90"></div>
+          <div id="continueBtns" class="mt-2 hidden">
+            <button id="goDash" class="w-full py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all">Continue to Dashboard</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script>
+    const API = "/api";
+    let token = localStorage.getItem('token') || '';
+    // If already logged in, auto-redirect based on role
+    (async () => {
+      try{
+        if(token){
+          const mr = await fetch(`${API}/me`, {headers:{'Authorization':`Bearer ${token}`}});
+          if(mr.ok){
+            const me = await mr.json();
+            const target = (me.role === 'administrator') ? 'admin.html' : 'student.html';
+            window.location.replace(target);
+          }
+        }
+      }catch(e){ /* ignore */ }
+    })();
+
+    // Remember me
+    try{
+      const saved = localStorage.getItem('remember_username') || '';
+      if(saved){ document.getElementById('username').value = saved; document.getElementById('remember').checked = true; }
+    }catch(e){}
+
+    document.getElementById('register').onclick = async () => {
+      const uEl = document.getElementById('username');
+      const pEl = document.getElementById('password');
+      const u = uEl.value.trim();
+      const p = pEl.value;
+      const msg = document.getElementById('msg');
+      if(!u || !p){
+        msg.innerText = 'Please enter both username and password.';
+        uEl.classList.toggle('ring-2', !u); uEl.classList.toggle('ring-red-500', !u);
+        pEl.classList.toggle('ring-2', !p); pEl.classList.toggle('ring-red-500', !p);
+        return;
+      }
+      uEl.classList.remove('ring-2','ring-red-500');
+      pEl.classList.remove('ring-2','ring-red-500');
+      const r = await fetch(`${API}/auth/register?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`, {method:'POST'});
+      msg.innerText = r.ok ? 'Registered. You can log in now.' : 'Registration failed (username may exist).';
+    };
+    // Footnote Sign Up link triggers register
+    document.getElementById('signUpLink').onclick = (e)=>{ e.preventDefault(); document.getElementById('register').click(); };
+
+    document.getElementById('login').onclick = async () => {
+      const uEl = document.getElementById('username');
+      const pEl = document.getElementById('password');
+      const u = uEl.value.trim();
+      const p = pEl.value;
+      const msg = document.getElementById('msg');
+      if(!u || !p){
+        msg.innerText = 'Incorrect input: username and password are required.';
+        uEl.classList.toggle('ring-2', !u); uEl.classList.toggle('ring-red-500', !u);
+        pEl.classList.toggle('ring-2', !p); pEl.classList.toggle('ring-red-500', !p);
+        return;
+      }
+      uEl.classList.remove('ring-2','ring-red-500');
+      pEl.classList.remove('ring-2','ring-red-500');
+      const body = new URLSearchParams({username:u, password:p});
+      let r;
+      try{
+        r = await fetch(`${API}/auth/login`, {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body});
+      }catch(err){ document.getElementById('msg').innerText = 'Network error. Check server.'; return; }
+      if(!r.ok){ document.getElementById('msg').innerText = 'Login failed'; return; }
+      const j = await r.json();
+      token = j.access_token; localStorage.setItem('token', token);
+      // save remembered username if chosen
+      try{ const remember = document.getElementById('remember').checked; if(remember){ localStorage.setItem('remember_username', document.getElementById('username').value.trim()); } else { localStorage.removeItem('remember_username'); } }catch(e){}
+      document.getElementById('msg').innerText = 'Logged in. Redirecting…';
+      let role = j.role;
+      try{
+        const mr = await fetch(`${API}/me`, {headers:{'Authorization':`Bearer ${token}`}});
+        if(mr.ok){ const me = await mr.json(); role = me.role || role; }
+      }catch(e){ console.error(e); }
+      const target = (role === 'administrator') ? 'admin.html' : 'student.html';
+      // Robust redirect
+      const tryNav = () => { try{ window.location.replace(target); }catch(_){ window.location.href = target; } window.location.assign(target); };
+      tryNav();
+      // Also show an explicit button as fallback
+      const btns = document.getElementById('continueBtns');
+      btns.classList.remove('hidden');
+      document.getElementById('goDash').onclick = ()=>{ window.location.href = target; };
+      // Fallback link if redirect is blocked
+      setTimeout(()=>{ document.getElementById('msg').innerHTML = `If not redirected, <a class="text-blue-600 underline" href="${target}">click here</a>.`; }, 400);
+      // Retry a few times automatically
+      setTimeout(tryNav, 800);
+      setTimeout(tryNav, 1500);
+    };
+  </script>
+</body>
+</html>

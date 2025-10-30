@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .progress-ring { transition: --p 0.6s ease-out; }
+  </style>
+ </head>
+ <body class="min-h-screen text-white bg-gradient-to-br from-gray-900 via-gray-800 to-slate-900">
+  <nav class="bg-gray-900/95 backdrop-blur border-b border-gray-700">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <svg class="w-8 h-8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="24" height="24" rx="6" fill="#2563eb"/>
+          <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="11" font-weight="700" fill="white" font-family="Arial,Helvetica,sans-serif">MM</text>
+        </svg>
+        <span class="font-semibold text-white">Student Dashboard</span>
+      </div>
+      <div class="space-x-3 text-sm">
+        <a href="index.html" class="text-gray-300 hover:text-blue-400">Home</a>
+        <button id="logout" class="px-3 py-1 rounded-md border text-gray-300 border-gray-600 hover:bg-gray-800">Logout</button>
+      </div>
+    </div>
+  </nav>
+  <main class="max-w-6xl mx-auto p-6 space-y-6">
+    <!-- Greeting -->
+    <section class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold" id="avatar">S</div>
+        <div>
+          <div class="text-sm text-gray-300">Hi,</div>
+          <div class="text-xl font-bold text-white" id="studentName">Student</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid md:grid-cols-3 gap-4">
+      <!-- Pass probability progress -->
+      <div class="bg-gray-900 p-4 rounded-xl border border-gray-700 transition-all">
+        <div class="font-semibold mb-2 text-white">Pass Probability</div>
+        <div class="relative w-32 h-32 mx-auto">
+          <div id="probRing" class="progress-ring absolute inset-0 rounded-full bg-[conic-gradient(var(--fill),theme(colors.blue.500)_var(--p),theme(colors.gray.700)_0)]" style="--p:0%;--fill:transparent"></div>
+          <div class="absolute inset-2 rounded-full bg-gray-800 flex items-center justify-center">
+            <div id="probTxt" class="text-2xl font-bold text-white">--%</div>
+          </div>
+        </div>
+        <div class="text-xs text-gray-400 mt-2 text-center">Based on your latest tests</div>
+      </div>
+      <!-- Attendance card -->
+      <div class="bg-gray-900 p-4 rounded-xl border border-gray-700 transition-all">
+        <div class="font-semibold mb-2 text-white">Attendance</div>
+        <div id="attTxt" class="text-3xl font-bold text-white">--%</div>
+        <div id="attWarn" class="text-sm text-blue-300 mt-1 hidden">Keep attendance ≥ 75% to be eligible</div>
+      </div>
+      <!-- Predicted marks card -->
+      <div class="bg-gray-900 p-4 rounded-xl border border-gray-700 transition-all">
+        <div class="font-semibold mb-2 text-white">Predicted Next Marks</div>
+        <div id="predBig" class="text-3xl font-bold mb-1 text-white">-- / 100</div>
+        <div class="text-xs text-gray-400">Avg of tests and model estimates</div>
+      </div>
+    </section>
+
+    <section class="grid md:grid-cols-3 gap-4">
+      <div class="bg-gray-900 p-4 rounded-xl border border-gray-700 md:col-span-2">
+        <h3 class="font-semibold mb-2 text-white">Previous Tests and Prediction</h3>
+        <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+          <div class="text-gray-400">Test 1:</div><div id="t1Val" class="text-white">--</div>
+          <div class="text-gray-400">Test 2:</div><div id="t2Val" class="text-white">--</div>
+          <div class="text-gray-400">Test 3:</div><div id="t3Val" class="text-white">--</div>
+          <div class="text-gray-400">Predicted Next Exam:</div><div id="predVal" class="text-white">--/100</div>
+        </div>
+        <canvas id="marksChart" height="140"></canvas>
+      </div>
+      <div class="bg-gray-900 p-4 rounded-xl border border-gray-700">
+        <h3 class="font-semibold mb-2 text-white">Latest Suggestion</h3>
+        <div id="suggestionBox" class="text-sm text-gray-200">No suggestion yet.</div>
+      </div>
+    </section>
+
+    <section class="grid md:grid-cols-2 gap-4">
+      <div class="bg-gray-900 p-4 rounded-xl border border-gray-700 transition-all">
+        <h2 class="font-semibold mb-2 text-white">Plan Study Hours</h2>
+        <div class="flex items-center gap-3 mb-2">
+          <input id="hours" type="range" min="0" max="8" step="0.5" class="w-full accent-blue-500" />
+          <span id="hoursVal" class="text-sm w-14 text-right">0h</span>
+        </div>
+        <div class="text-sm text-white">If you study <span id="hTxt" class="font-semibold text-white">0</span> hours:</div>
+        <div class="mt-1 text-base text-white">Estimated Marks: <span id="estMarks" class="inline-block align-middle px-2 py-0.5 rounded bg-blue-600 text-white font-bold text-lg">--/100</span></div>
+        <div class="text-base text-white">Probability to Pass: <span id="estProb" class="inline-block align-middle px-2 py-0.5 rounded bg-blue-600 text-white font-bold text-lg">--%</span></div>
+        <div id="estimateMsg" class="mt-2 text-xs text-blue-300"></div>
+      </div>
+      <div class="bg-gray-900 p-4 rounded-xl border border-gray-700 transition-all">
+        <h2 class="font-semibold mb-2 text-white">Messages</h2>
+        <div id="chatBox" class="h-48 overflow-y-auto border border-gray-700 rounded p-2 text-sm bg-gray-800 text-gray-200"></div>
+        <div class="mt-2 flex gap-2">
+          <input id="chatInput" class="border border-gray-700 bg-gray-800 text-gray-200 rounded px-2 py-1 flex-1 focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Type a message" />
+          <button id="chatSend" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded shadow hover:shadow-lg transition-all">Send</button>
+        </div>
+      </div>
+    </section>
+  </main>
+  
+  <!-- Footer -->
+  <footer class="mt-12 py-6 bg-gray-900/80 backdrop-blur border-t border-gray-700">
+    <div class="max-w-6xl mx-auto px-4 text-center text-sm text-gray-400">
+      <p>&copy; 2025 MarkMate. Built with ♥️ for student success.</p>
+    </div>
+  </footer>
+
+  <script>
+    const API = "/api";
+    let token = localStorage.getItem('token') || '';
+    async function ensureAuth(){
+      if(!token){ window.location.href = 'index.html'; return; }
+      try{
+        const r = await fetch(`${API}/me`, {headers:{'Authorization':`Bearer ${token}`}});
+        if(!r.ok){
+          localStorage.removeItem('token');
+          window.location.href = 'index.html';
+          return;
+        }
+        const me = await r.json();
+        // Greeting: "Hi, username"
+        try{
+          const nm = (me.username || me.name || 'Student');
+          const nameEl = document.getElementById('studentName');
+          const hiEl = document.querySelector('#studentName')?.previousElementSibling; // the small 'Hi,' text div
+          if(hiEl) hiEl.textContent = '';
+          if(nameEl) nameEl.textContent = `Hi, ${nm}`;
+          const av = document.getElementById('avatar');
+          if(av && nm) av.textContent = (nm[0]||'S').toUpperCase();
+        }catch(e){}
+        if(me.role && me.role !== 'student'){
+          // Redirect admins away if they somehow arrive here
+          window.location.href = 'admin.html';
+        }
+      }catch(e){
+        localStorage.removeItem('token');
+        window.location.href = 'index.html';
+      }
+    }
+    ensureAuth();
+
+    document.getElementById('logout').onclick = () => {
+      localStorage.removeItem('token');
+      window.location.href = 'index.html';
+    };
+
+    async function loadSummary(){
+      const r = await fetch(`${API}/student/summary`, {headers:{'Authorization':`Bearer ${token}`}});
+      const j = await r.json();
+      const pct = j.pass_probability == null ? null : Math.round(j.pass_probability*100);
+      const txt = pct==null? '--%' : `${pct}%`;
+      document.getElementById('probTxt').innerText = txt;
+      // update progress ring
+      const ring = document.getElementById('probRing');
+      const val = pct==null? 0 : pct;
+      ring.style.setProperty('--p', `${val}%`);
+      ring.style.setProperty('--fill', 'transparent');
+    }
+
+    async function loadMetrics(){
+      const r = await fetch(`${API}/student/metrics`, {headers:{'Authorization':`Bearer ${token}`} });
+      if(!r.ok) return;
+      const m = await r.json();
+      // cache for estimator fallback
+      window.lastStudentMetrics = m;
+      const t1 = m.test1!=null? Math.round(m.test1): null;
+      const t2 = m.test2!=null? Math.round(m.test2): null;
+      const t3 = m.test3!=null? Math.round(m.test3): null;
+      const pred = m.predicted_next_exam!=null? Math.round(m.predicted_next_exam): null;
+      document.getElementById('t1Val').innerText = t1==null?'--':`${t1} / 100`;
+      document.getElementById('t2Val').innerText = t2==null?'--':`${t2} / 100`;
+      document.getElementById('t3Val').innerText = t3==null?'--':`${t3} / 100`;
+      const predTxt = pred==null?'--/100':`${pred} / 100`;
+      document.getElementById('predVal').innerText = predTxt;
+      document.getElementById('predBig').innerText = pred==null?'-- / 100':`${pred} / 100`;
+      // attendance, suggestion
+      if(typeof m.attendance === 'number'){
+        const attPct = Math.round(m.attendance*100);
+        document.getElementById('attTxt').innerText = `${attPct}%`;
+        document.getElementById('attWarn').classList.toggle('hidden', attPct>=75);
+      }
+      if(m.suggestion){ document.getElementById('suggestionBox').innerText = m.suggestion; }
+      const labels = ['Test 1','Test 2','Test 3','Predicted'];
+      const actual = [t1, t2, t3, null];
+      const predicted = [null, null, null, pred];
+      const ctx = document.getElementById('marksChart');
+      new Chart(ctx, {
+        type:'line',
+        data:{
+          labels,
+          datasets:[
+            {
+              label:'Actual Marks',
+              data: actual,
+              borderColor:'#60a5fa',
+              backgroundColor:'rgba(96,165,250,0.2)',
+              borderWidth:2,
+              pointRadius:3,
+              pointBackgroundColor:'#60a5fa',
+              tension:0.25,
+              spanGaps:true
+            },
+            {
+              label:'Predicted Next',
+              data: predicted,
+              borderColor:'#34d399',
+              backgroundColor:'rgba(52,211,153,0.2)',
+              borderDash:[6,4],
+              borderWidth:2,
+              pointRadius:3,
+              pointBackgroundColor:'#34d399',
+              tension:0.25,
+              spanGaps:true
+            }
+          ]
+        },
+        options:{
+          responsive:true,
+          plugins:{
+            legend:{ labels:{ color:'#e5e7eb' } },
+            tooltip:{
+              mode:'index',
+              intersect:false,
+              titleColor:'#0f172a',
+              bodyColor:'#0f172a',
+              backgroundColor:'#f8fafc',
+              borderColor:'#cbd5e1',
+              borderWidth:1
+            }
+          },
+          scales:{
+            x:{
+              ticks:{ color:'#cbd5e1' },
+              grid:{ color:'rgba(148,163,184,0.2)' }
+            },
+            y:{
+              beginAtZero:true,
+              max:100,
+              ticks:{ color:'#cbd5e1' },
+              grid:{ color:'rgba(148,163,184,0.2)' }
+            }
+          }
+        }
+      });
+    }
+
+    // Planned hours estimator
+    const hours = document.getElementById('hours');
+    const hoursVal = document.getElementById('hoursVal');
+    const estMarks = document.getElementById('estMarks');
+    const estProb = document.getElementById('estProb');
+    const hTxt = document.getElementById('hTxt');
+    async function estimate(){
+      const h = parseFloat(hours.value || '0');
+      hoursVal.innerText = `${h}h`;
+      hTxt.innerText = h;
+      const note = document.getElementById('estimateMsg');
+      note.innerText = '';
+      try{
+        const r = await fetch(`${API}/estimate`, {method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body: JSON.stringify({planned_hours:h})});
+        if(!r.ok){
+          // Backend error — fallback to latest metrics if present
+          const lm = window.lastStudentMetrics || {};
+          const fp = Math.round(((lm.pass_probability ?? 0)*100));
+          const fm = Math.round(lm.predicted_next_exam ?? ((lm.avg_percent ?? 0)*100));
+          estProb.innerText = Number.isFinite(fp) && fp>0 ? `${fp}%` : '--%';
+          estMarks.innerText = Number.isFinite(fm) && fm>0 ? `${fm} / 100` : '--/100';
+          note.innerText = `No estimate available (server response ${r.status}). Showing latest metrics.`;
+          // proceed to apply monotonic adjustment below
+        } else {
+          const j = await r.json();
+          const p = Math.round((j.probability ?? j.pass_probability ?? 0)*100);
+          estProb.innerText = Number.isFinite(p) ? `${p}%` : '--%';
+          const m = Math.round(
+            (j.estimated_marks ?? j.marks ?? j.predicted_next ?? j.predicted_next_exam ?? (j.probability??0)*100)
+          );
+          estMarks.innerText = Number.isFinite(m) ? `${m} / 100` : '--/100';
+          if(!Number.isFinite(p) || !Number.isFinite(m)){
+            // Fallback from latest metrics if API did not return fields
+            const lm = window.lastStudentMetrics || {};
+            const fp2 = Math.round(((lm.pass_probability ?? 0)*100));
+            const fm2 = Math.round(lm.predicted_next_exam ?? lm.avg_percent*100 ?? 0);
+            if(!Number.isFinite(p) && Number.isFinite(fp2)) estProb.innerText = `${fp2}%`;
+            if(!Number.isFinite(m) && Number.isFinite(fm2)) estMarks.innerText = `${fm2} / 100`;
+            note.innerText = 'Using latest metrics as fallback for display.';
+          }
+        }
+      }catch(e){ /* noop */ }
+
+      // Monotonic increase w.r.t hours on the client
+      // Parse current displayed numbers
+      const getNum = (el, def=0)=>{ const m = (el.textContent||'').match(/\d+/); return m? Number(m[0]) : def; };
+      const currentM = getNum(estMarks, 0);
+      const currentP = getNum(estProb, 0);
+      // Baseline and slope for fallback when API fails or decreases
+      const lm = window.lastStudentMetrics || {};
+      const baseM = Math.max(0, Math.min(100, Math.round(lm.predicted_next_exam ?? (lm.avg_percent??0)*100 ?? 50)));
+      const slope = 5; // marks per hour
+      const candidateM = Math.max(baseM, Math.round(baseM + slope * h));
+      const shownM = getNum(estMarks, 0);
+      let nextM = Math.max(shownM, candidateM);
+      nextM = Math.min(100, nextM);
+      if(!Number.isFinite(shownM) || shownM===0){ nextM = candidateM; }
+      // Only enforce monotonic when hours increased compared to last measured
+      const lastH = window._lastPlannedHours ?? 0;
+      if(h >= lastH){
+        estMarks.innerText = `${nextM} / 100`;
+        const nextP = Math.min(100, Math.max(currentP, Math.round(nextM))); // tie prob to marks if needed
+        estProb.innerText = `${nextP}%`;
+      }
+      window._lastPlannedHours = h;
+      window._lastEstMarks = getNum(estMarks, nextM);
+      window._lastEstProb = getNum(estProb, currentP);
+    }
+    hours.oninput = estimate;
+
+    // Messaging with assigned admin
+    let adminId = null;
+    async function loadAssignedAdmin(){
+      try{
+        const r = await fetch(`${API}/assigned_admin`, {headers:{'Authorization':`Bearer ${token}`}});
+        if(r.ok){ const a = await r.json(); adminId = a.id; }
+      }catch(e){}
+    }
+    async function loadChat(){
+      if(!adminId) return;
+      const r = await fetch(`${API}/messages?with_user=${adminId}`, {headers:{'Authorization':`Bearer ${token}`}});
+      const msgs = await r.json();
+      const box = document.getElementById('chatBox');
+      box.innerHTML = msgs.map(m=>`<div class="mb-1 ${m.from_user_id===adminId?'text-gray-200':'text-blue-300'}">${m.text}</div>`).join('');
+      box.scrollTop = box.scrollHeight;
+    }
+    async function sendMsg(){
+      const inp = document.getElementById('chatInput');
+      const txt = (inp.value||'').trim();
+      if(!txt || !adminId) return;
+      await fetch(`${API}/messages`, {method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body: JSON.stringify({to_user_id: adminId, text: txt})});
+      inp.value='';
+      loadChat();
+    }
+    document.getElementById('chatSend').onclick = sendMsg;
+    setInterval(loadChat, 3000);
+
+    // Initial loads
+    loadSummary();
+    loadMetrics();
+    loadAssignedAdmin().then(()=>{ loadChat(); });
+    estimate();
+  </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Charts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="min-h-screen text-white bg-gradient-to-br from-gray-900 via-gray-800 to-slate-900">
+  <nav class="bg-gray-900/95 backdrop-blur border-b border-gray-700">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+      <a href="index.html" class="text-xl font-semibold text-white flex items-center gap-2">
+        <svg class="w-8 h-8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="24" height="24" rx="6" fill="#2563eb"/>
+          <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="11" font-weight="700" fill="white" font-family="Arial,Helvetica,sans-serif">MM</text>
+        </svg>
+        <span>MarkMate</span>
+      </a>
+      <div class="space-x-4 text-sm">
+        <a href="index.html" class="text-gray-300 hover:text-blue-400">Home</a>
+        <a href="predict.html" class="text-gray-300 hover:text-blue-400">Predict</a>
+        <a href="charts.html" class="text-gray-300 hover:text-blue-400">Charts</a>
+      </div>
+    </div>
+  </nav>
+  <main class="max-w-3xl mx-auto p-6">
+    <div class="bg-gray-900 p-4 rounded-xl border border-gray-700">
+      <h2 class="font-semibold mb-2 text-white">Model Metrics</h2>
+      <canvas id="metricsChart" height="160"></canvas>
+    </div>
+  </main>
+  <footer class="mt-12 py-6 bg-gray-900/80 backdrop-blur border-t border-gray-700">
+    <div class="max-w-5xl mx-auto px-4 text-center text-sm text-gray-400">
+      <p>&copy; 2025 MarkMate. Built with ♥️ for student success.</p>
+    </div>
+  </footer>
+  <script>
+    const API = "/api";
+    async function loadMetrics(){
+      const r = await fetch(`${API}/metrics`);
+      const j = await r.json();
+      const labels = Object.keys(j);
+      const data = Object.values(j);
+      new Chart(document.getElementById('metricsChart'), {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Score', data, backgroundColor: ['#60a5fa','#34d399','#fbbf24','#f87171'] }] },
+        options: { scales: { y: { beginAtZero: true, max: 1 } } }
+      });
+    }
+    loadMetrics();
+  </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MarkMate</title>
+  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%231f2937"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="700" fill="white">MM</text></svg>' />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen text-white bg-gradient-to-br from-gray-900 via-gray-800 to-slate-900">
+  <nav class="bg-gray-900/95 backdrop-blur border-b border-gray-700">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+      <a href="index.html" class="text-xl font-semibold flex items-center gap-2">
+        <svg class="w-8 h-8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="24" height="24" rx="6" fill="#2563eb"/>
+          <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="11" font-weight="700" fill="white" font-family="Arial,Helvetica,sans-serif">MM</text>
+        </svg>
+        <span class="text-white">MarkMate</span>
+      </a>
+      <div class="flex items-center gap-3 text-sm">
+        <a href="about.html" class="px-3 py-2 rounded-md border text-gray-300 border-gray-600 hover:bg-gray-800 transition-all">About</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <!-- Hero -->
+    <section class="relative overflow-hidden">
+      <div class="max-w-6xl mx-auto px-4 py-14 grid md:grid-cols-2 gap-8 items-center">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 text-white">Welcome to MarkMate</h1>
+          <p class="text-gray-300 mb-5">The student companion. Predict marks, track attendance, and get insights for success.</p>
+          <div class="flex items-center gap-3">
+            <a href="login.html" id="heroLogin" class="px-5 py-3 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg shadow-blue-500/50 hover:shadow-xl hover:shadow-blue-500/60 transition-all transform hover:scale-[1.02]">Login</a>
+            <a href="login.html" id="heroSignup" class="text-blue-400 hover:text-blue-300 hover:underline transition-colors">Signup</a>
+          </div>
+        </div>
+        <div class="relative">
+          <a href="index.html" class="block aspect-[4/3] rounded-2xl overflow-hidden bg-gray-800 border border-gray-700 shadow-xl shadow-blue-900/30">
+            <img src="https://user-gen-media-assets.s3.amazonaws.com/seedream_images/502dbd44-12be-4b11-b5af-671e0f9d01a8.png" alt="MarkMate" class="w-full h-full object-cover" />
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature pills -->
+    <section id="features" class="py-6">
+      <div class="max-w-6xl mx-auto px-4 grid md:grid-cols-4 gap-3">
+        <div class="rounded-xl bg-gray-800 p-4 border border-gray-700 hover:shadow-xl hover:shadow-blue-500/20 hover:border-blue-500/50 transition-all cursor-pointer">
+          <div class="text-sm font-semibold text-blue-400">Predict Marks</div>
+          <div class="text-xs text-gray-400">Model-driven estimates for the next exam.</div>
+        </div>
+        <div class="rounded-xl bg-gray-800 p-4 border border-gray-700 hover:shadow-xl hover:shadow-blue-500/20 hover:border-blue-500/50 transition-all cursor-pointer">
+          <div class="text-sm font-semibold text-blue-400">Admin Insights</div>
+          <div class="text-xs text-gray-400">Attendance, pass rules, cohort analytics.</div>
+        </div>
+        <div class="rounded-xl bg-gray-800 p-4 border border-gray-700 hover:shadow-xl hover:shadow-blue-500/20 hover:border-blue-500/50 transition-all cursor-pointer">
+          <div class="text-sm font-semibold text-blue-400">Student Feedback</div>
+          <div class="text-xs text-gray-400">Personal suggestions and study tips.</div>
+        </div>
+        <div class="rounded-xl bg-gray-800 p-4 border border-gray-700 hover:shadow-xl hover:shadow-blue-500/20 hover:border-blue-500/50 transition-all cursor-pointer">
+          <div class="text-sm font-semibold text-blue-400">Secure Analytics</div>
+          <div class="text-xs text-gray-400">Privacy-first, role-based dashboards.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  
+  
+  <!-- Footer -->
+  <footer class="mt-12 py-6 bg-gray-900/80 backdrop-blur border-t border-gray-700">
+    <div class="max-w-6xl mx-auto px-4 text-center text-sm text-gray-400">
+      <p>&copy; 2025 MarkMate. Built with ♥️ for student success.</p>
+    </div>
+  </footer>
+
+  <script>
+    const API = "/api";
+    let token = localStorage.getItem('token') || '';
+    // If already logged in, optionally route to dashboard based on /api/me
+    (async () => {
+      // Hardened: never block page if API is down or token is stale
+      if(!token) return; // show page as-is
+      try{
+        const mr = await fetch(`${API}/me`, {headers:{'Authorization':`Bearer ${token}`}});
+        if(!mr.ok){
+          // stale token — clear but keep user on page
+          localStorage.removeItem('token');
+          return;
+        }
+        const me = await mr.json();
+        if(me && me.role === 'administrator') { window.location.href = 'admin.html'; return; }
+        if(me && me.role === 'student') { window.location.href = 'student.html'; return; }
+      }catch(e){ /* ignore: allow page to render */ }
+    })();
+
+    // Pre-login widget: no demo data; animate UI and prompt login
+    const bar = document.getElementById('demoBar');
+    document.getElementById('demoStart').onclick = () => {
+      // simple visual animation without revealing any prediction value
+      bar.style.transition = 'width 1.2s ease-in-out';
+      bar.style.width = '100%';
+      setTimeout(()=>{ bar.style.width = '0%'; }, 1400);
+      // Navigate to dedicated login page
+      setTimeout(()=>{ window.location.href = 'login.html'; }, 600);
+    };
+
+    // No modal; About navigates to about.html
+
+
+  </script>
+</body>
+</html>
