@@ -675,10 +675,17 @@ def report(format: str = "csv", db: Session = Depends(get_db), current_user: Use
 def api_root():
     return {"message": "Student Performance Prediction API", "endpoints": ["/api/auth/register", "/api/auth/login", "/api/predict", "/api/train", "/api/metrics", "/api/bulk_predict", "/api/report"]}
 
-# Mount frontend as static site at root
-FRONTEND_DIR = str((Path(__file__).resolve().parent.parent / "frontend").resolve())
-if not os.path.exists(FRONTEND_DIR):
-    # fallback if running from project root
-    FRONTEND_DIR = str((Path(__file__).resolve().parent.parent.parent / "frontend").resolve())
+# Include API router first
 app.include_router(api)
-app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
+
+# Add a root endpoint for health check
+@app.get("/")
+def root():
+    return {"message": "MarkMate API Server", "status": "running", "api_docs": "/docs", "api_root": "/api"}
+
+# Mount frontend as static site (but this won't work on Render since we're API-only)
+# FRONTEND_DIR = str((Path(__file__).resolve().parent.parent / "frontend").resolve())
+# if not os.path.exists(FRONTEND_DIR):
+#     # fallback if running from project root
+#     FRONTEND_DIR = str((Path(__file__).resolve().parent.parent.parent / "frontend").resolve())
+# app.mount("/static", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
