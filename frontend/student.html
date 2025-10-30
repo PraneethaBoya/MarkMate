@@ -116,7 +116,7 @@
   </footer>
 
   <script>
-    const API = "/api";
+    const API = "https://markmate-api-vbm1.onrender.com/api";
     let token = localStorage.getItem('token') || '';
     async function ensureAuth(){
       if(!token){ window.location.href = 'index.html'; return; }
