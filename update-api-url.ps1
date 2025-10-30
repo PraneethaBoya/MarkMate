@@ -1,10 +1,10 @@
 # Update Frontend API URLs for Production
-# Run this after deploying backend to Railway/Render
+# Run this after deploying backend to Render
 
 Write-Host "🔧 MarkMate API URL Updater" -ForegroundColor Cyan
 Write-Host ""
 
-$backendUrl = Read-Host "Enter your backend URL (e.g., https://markmate-production.up.railway.app)"
+$backendUrl = Read-Host "Enter your backend URL (e.g., https://markmate-api.onrender.com)"
 
 if ([string]::IsNullOrWhiteSpace($backendUrl)) {
     Write-Host "❌ Backend URL is required" -ForegroundColor Red

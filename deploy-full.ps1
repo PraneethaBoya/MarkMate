@@ -63,19 +63,22 @@ if ($LASTEXITCODE -eq 0) {
 Write-Host ""
 
 # Step 4: Deployment Instructions
-Write-Host "Step 4: Deploy Backend to Railway" -ForegroundColor Yellow
-Write-Host "---------------------------------" -ForegroundColor Yellow
+Write-Host "Step 4: Deploy Backend to Render" -ForegroundColor Yellow
+Write-Host "--------------------------------" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "1. Go to: https://railway.app" -ForegroundColor White
+Write-Host "1. Go to: https://render.com" -ForegroundColor White
 Write-Host "2. Sign in with GitHub" -ForegroundColor White
-Write-Host "3. Click 'Start a New Project'" -ForegroundColor White
-Write-Host "4. Select 'Deploy from GitHub repo'" -ForegroundColor White
+Write-Host "3. Click 'New +' → 'Web Service'" -ForegroundColor White
+Write-Host "4. Select 'Build and deploy from a Git repository'" -ForegroundColor White
 Write-Host "5. Choose: $username/$reponame" -ForegroundColor White
-Write-Host "6. Wait 2-3 minutes for deployment" -ForegroundColor White
-Write-Host "7. Copy your backend URL (e.g., https://markmate-production.up.railway.app)" -ForegroundColor White
+Write-Host "6. Configure: Name=markmate-api, Environment=Python 3" -ForegroundColor White
+Write-Host "7. Build Command: pip install -r requirements.txt" -ForegroundColor White
+Write-Host "8. Start Command: uvicorn backend.main:app --host 0.0.0.0 --port \$PORT" -ForegroundColor White
+Write-Host "9. Wait 3-5 minutes for deployment" -ForegroundColor White
+Write-Host "10. Copy your backend URL (e.g., https://markmate-api.onrender.com)" -ForegroundColor White
 Write-Host ""
 
-$backendUrl = Read-Host "Enter your Railway backend URL (or press Enter to skip for now)"
+$backendUrl = Read-Host "Enter your Render backend URL (or press Enter to skip for now)"
 
 if (-not [string]::IsNullOrWhiteSpace($backendUrl)) {
     Write-Host ""

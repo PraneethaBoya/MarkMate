@@ -1,14 +1,14 @@
-# 🚀 Deploy MarkMate Backend to Railway
+# 🚀 Deploy MarkMate Backend to Render
 
 ## Quick Setup (10 minutes)
 
 ### Prerequisites
 - GitHub account
-- Railway account (sign up at railway.app with GitHub)
+- Render account (sign up at render.com with GitHub)
 
 ---
 
-## Option 1: Railway (Recommended - Free $5/month credit)
+## Deploy to Render (Recommended - Free tier)
 
 ### 1. Push to GitHub First
 ```powershell
@@ -21,30 +21,36 @@ git branch -M main
 git push -u origin main
 ```
 
-### 2. Deploy to Railway
-1. Go to [railway.app](https://railway.app)
-2. Click **"Start a New Project"**
-3. Select **"Deploy from GitHub repo"**
-4. Choose your `markmate` repository
-5. Railway will auto-detect Python and deploy
+### 2. Deploy to Render
+1. Go to [render.com](https://render.com)
+2. Click **"Get Started for Free"**
+3. Sign in with **GitHub**
+4. Click **"New +" → "Web Service"**
+5. Select **"Build and deploy from a Git repository"**
+6. Choose your `markmate` repository
+7. Configure:
+   - **Name**: `markmate-api`
+   - **Environment**: `Python 3`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+   - **Plan**: `Free`
 
-### 3. Add Database (Optional but recommended)
-1. In your Railway project, click **"+ New"**
-2. Select **"Database" → "PostgreSQL"**
-3. Railway will auto-create and link it
+### 3. Add Database (Optional)
+1. Create **"New +" → "PostgreSQL"**
+2. Copy the connection string
+3. Add as environment variable
 
 ### 4. Configure Environment Variables
-In Railway dashboard → Variables tab, add:
+In Render dashboard → Environment tab, add:
 ```
 SECRET_KEY=your-secret-key-change-this-in-production
-DATABASE_URL=${{Postgres.DATABASE_URL}}  # Auto-filled if you added Postgres
-PORT=${{PORT}}  # Auto-filled by Railway
+DATABASE_URL=<your-postgres-connection-string>
 ```
 
 ### 5. Get Your Backend URL
-After deployment (~2-3 minutes):
+After deployment (~3-5 minutes):
 ```
-https://markmate-production.up.railway.app
+https://markmate-api.onrender.com
 ```
 
 ---
