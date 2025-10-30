@@ -76,16 +76,38 @@
         <div id="results" class="mt-3 grid md:grid-cols-3 gap-2"></div>
       </section>
 
+      <!-- Pass Rules Banner (Always Visible) -->
+      <section class="bg-gradient-to-r from-green-600 to-green-700 p-4 rounded-xl border border-green-500 shadow-lg">
+        <div class="flex items-center gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          <div class="flex-1">
+            <div class="font-bold text-white text-lg mb-1">Pass Rules & Criteria</div>
+            <div class="text-green-100 text-sm flex flex-wrap gap-4">
+              <span>✓ <strong>Pass Rule:</strong> 
+                <select id="passRuleTop" class="bg-green-800 text-white border border-green-500 rounded px-2 py-1 ml-1">
+                  <option value="highest">35% of Highest Marks</option>
+                  <option value="average">50% of Average Marks</option>
+                </select>
+              </span>
+              <span>✓ <strong>Attendance Threshold:</strong> 75% Minimum</span>
+              <span>✓ <strong>Assignments:</strong> All Must Be Completed</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="metricsSection" class="bg-gray-900 p-4 rounded-xl border border-gray-700 hidden">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-2">
-          <h2 class="font-semibold">Student Metrics</h2>
+          <h2 class="font-semibold text-white">Student Metrics</h2>
           <div class="flex items-center gap-2 text-sm">
-            <label for="passRule" class="text-gray-700">Pass rule:</label>
-            <select id="passRule" class="border rounded px-2 py-1">
+            <label for="passRule" class="text-gray-300">Pass rule:</label>
+            <select id="passRule" class="border rounded px-2 py-1 bg-gray-800 text-white border-gray-600">
               <option value="highest">Pass with 35% of highest marks</option>
               <option value="average">Pass with 50% of average marks</option>
             </select>
-            <span class="text-gray-600">Attendance threshold: 75%</span>
+            <span class="text-gray-300">Attendance threshold: 75%</span>
           </div>
         </div>
         <div class="overflow-x-auto">
@@ -503,7 +525,19 @@
     };
 
     const passRuleEl = document.getElementById('passRule');
-    if(passRuleEl){ passRuleEl.onchange = ()=>{ if(lastMetricsItems && lastMetricsItems.length){ renderMetrics(lastMetricsItems); } }; }
+    const passRuleTopEl = document.getElementById('passRuleTop');
+    
+    // Sync the two pass rule dropdowns
+    if(passRuleEl && passRuleTopEl){
+      passRuleEl.onchange = ()=>{ 
+        passRuleTopEl.value = passRuleEl.value;
+        if(lastMetricsItems && lastMetricsItems.length){ renderMetrics(lastMetricsItems); } 
+      };
+      passRuleTopEl.onchange = ()=>{ 
+        passRuleEl.value = passRuleTopEl.value;
+        if(lastMetricsItems && lastMetricsItems.length){ renderMetrics(lastMetricsItems); } 
+      };
+    }
     // View switching
     function setActiveView(view){
       const dash = ['section-stats','section-search','metricsSection','section-detail'];
