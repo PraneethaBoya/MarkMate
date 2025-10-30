@@ -10,10 +10,10 @@ import pandas as pd
 import io
 import os
 from pathlib import Path
-from .ml.pipeline import ModelManager
-from .models import Base, get_db, User, Prediction, Message, StudentMetrics, init_db
+from ml.pipeline import ModelManager
+from models import Base, get_db, User, Prediction, Message, StudentMetrics, init_db
 from sqlalchemy.orm import Session
-from .auth import get_password_hash, verify_password, create_access_token, get_current_user, require_admin
+from auth import get_password_hash, verify_password, create_access_token, get_current_user, require_admin
 from starlette.responses import StreamingResponse
 
 app = FastAPI(title="Student Performance Prediction API", version="1.0.0")
@@ -88,6 +88,18 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         raise HTTPException(status_code=400, detail="Invalid credentials")
     token = create_access_token({"sub": user.username, "uid": user.id, "role": user.role})
     return {"access_token": token, "token_type": "bearer", "username": user.username, "role": user.role}
+
+@api.post("/setup/promote")
+def setup_promote(username: str, key: str, db: Session = Depends(get_db)):
+    expected = os.environ.get("ADMIN_SETUP_KEY", "")
+    if not expected or key != expected:
+        raise HTTPException(status_code=403, detail="Invalid setup key")
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.role = "administrator"
+    db.commit()
+    return {"ok": True, "username": user.username, "role": user.role}
 
 @api.post("/predict", response_model=PredictResponse)
 def predict(payload: PredictRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
