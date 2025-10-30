@@ -42,6 +42,21 @@
       </div>
     </section>
 
+    <!-- Pass Rules Banner -->
+    <section class="bg-gradient-to-r from-blue-600 to-blue-700 p-4 rounded-xl border border-blue-500 shadow-lg">
+      <div class="flex items-center gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div class="flex-1">
+          <div class="font-bold text-white text-lg mb-1">Pass Requirements</div>
+          <div class="text-blue-100 text-sm">
+            ✓ Minimum 75% Attendance Required | ✓ Minimum 50% Marks to Pass | ✓ Complete All Assignments
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="grid md:grid-cols-3 gap-4">
       <!-- Pass probability progress -->
       <div class="bg-gray-900 p-4 rounded-xl border border-gray-700 transition-all">
@@ -58,13 +73,13 @@
       <div class="bg-gray-900 p-4 rounded-xl border border-gray-700 transition-all">
         <div class="font-semibold mb-2 text-white">Attendance</div>
         <div id="attTxt" class="text-3xl font-bold text-white">--%</div>
-        <div id="attWarn" class="text-sm text-blue-300 mt-1 hidden">Keep attendance ≥ 75% to be eligible</div>
+        <div class="text-sm text-yellow-400 mt-1">Minimum required: 75%</div>
       </div>
       <!-- Predicted marks card -->
       <div class="bg-gray-900 p-4 rounded-xl border border-gray-700 transition-all">
         <div class="font-semibold mb-2 text-white">Predicted Next Marks</div>
         <div id="predBig" class="text-3xl font-bold mb-1 text-white">-- / 100</div>
-        <div class="text-xs text-gray-400">Avg of tests and model estimates</div>
+        <div class="text-sm text-yellow-400">Minimum to pass: 50/100</div>
       </div>
     </section>
 
