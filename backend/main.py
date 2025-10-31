@@ -517,6 +517,7 @@ def admin_metrics_import(file: UploadFile = File(...), db: Session = Depends(get
     parsed_rows = []
     skipped_users = []
     total_rows = 0
+    student_counter = 1  # Counter for generating passwords in format 123CS00XX
     for row in reader:
         total_rows += 1
         def pick(*keys):
@@ -546,17 +547,18 @@ def admin_metrics_import(file: UploadFile = File(...), db: Session = Depends(get
             # Try by full_name
             u = db.query(User).filter(User.full_name == username).first()
         if not u:
-            # Auto-create student account with default password
-            default_password = "student123"  # Students can change this later
+            # Auto-create student account with password in format 123CS00XX
+            password = f"123CS00{student_counter:02d}"  # e.g., 123CS0001, 123CS0002, etc.
             u = User(
                 username=username,
-                password_hash=get_password_hash(default_password),
+                password_hash=get_password_hash(password),
                 role="student",
                 full_name=username
             )
             db.add(u)
             db.commit()
             db.refresh(u)
+            student_counter += 1  # Increment for next student
         def to_float(v):
             try:
                 if v is None:
