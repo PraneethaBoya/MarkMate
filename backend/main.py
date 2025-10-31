@@ -331,7 +331,10 @@ def admin_metrics_import(file: UploadFile = File(...), db: Session = Depends(get
     reader = csv.DictReader(_io.StringIO(text), delimiter=delim)
     # First pass: parse all rows to build a small training set from this upload
     parsed_rows = []
+    skipped_users = []
+    total_rows = 0
     for row in reader:
+        total_rows += 1
         def pick(*keys):
             # direct hit
             for k in keys:
@@ -352,12 +355,14 @@ def admin_metrics_import(file: UploadFile = File(...), db: Session = Depends(get
             return None
         username = (pick("Username", "User", "Name") or "").strip()
         if not username:
+            skipped_users.append({"username": "(empty)", "reason": "Empty username"})
             continue
         u = db.query(User).filter(User.username == username).first()
         if not u:
             # Try by full_name
             u = db.query(User).filter(User.full_name == username).first()
         if not u:
+            skipped_users.append({"username": username, "reason": "User not found in database"})
             continue
         def to_float(v):
             try:
@@ -494,7 +499,12 @@ def admin_metrics_import(file: UploadFile = File(...), db: Session = Depends(get
             pass
         inserted += 1
     db.commit()
-    return {"inserted": inserted}
+    return {
+        "inserted": inserted,
+        "total_rows": total_rows,
+        "skipped": len(skipped_users),
+        "skipped_details": skipped_users[:10]  # Show first 10 skipped users
+    }
 
 @api.delete("/admin/metrics/{metrics_id}")
 def admin_metrics_delete(metrics_id: int, db: Session = Depends(get_db), admin: User = Depends(require_admin)):

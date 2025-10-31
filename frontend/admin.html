@@ -337,7 +337,17 @@
         if(!r.ok){ const t = await r.text(); alert('Upload failed: '+t); return; }
         const j = await r.json();
         if(!j || typeof j.inserted === 'undefined' || j.inserted === 0){
-          alert('Uploaded but no rows were inserted. Please check your CSV headers.');
+          let msg = `Uploaded but no rows were inserted.\n\nTotal rows in CSV: ${j.total_rows || 0}\nInserted: ${j.inserted || 0}\nSkipped: ${j.skipped || 0}`;
+          if(j.skipped_details && j.skipped_details.length > 0){
+            msg += '\n\nSkipped users (first 10):';
+            j.skipped_details.forEach(s => {
+              msg += `\n- ${s.username}: ${s.reason}`;
+            });
+            msg += '\n\nPlease ensure usernames in CSV match registered students.';
+          }
+          alert(msg);
+        } else {
+          alert(`Successfully imported ${j.inserted} student records!\n\nTotal rows: ${j.total_rows}\nInserted: ${j.inserted}\nSkipped: ${j.skipped || 0}`);
         }
         document.getElementById('metricsSection').classList.remove('hidden');
         await loadMetrics();
