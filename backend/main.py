@@ -1,92 +1,181 @@
+# ============================================================================
+# MarkMate Main API - Student Performance Prediction System
+# ============================================================================
+# This is the main FastAPI application that provides all backend endpoints.
+# It includes:
+# - Authentication & authorization (login, register, JWT tokens)
+# - Student predictions (ML-based pass/fail predictions)
+# - Admin dashboard (student management, metrics upload, analytics)
+# - Messaging system (teacher-student communication)
+# - Data import/export (CSV upload/download)
+# ============================================================================
+
+# FastAPI core imports
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi import File, UploadFile
 from fastapi.routing import APIRouter
 from fastapi.staticfiles import StaticFiles
+
+# Data validation and typing
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
+
+# Data processing
 import pandas as pd
 import io
 import os
 from pathlib import Path
+
+# Our custom modules
 from ml.pipeline import ModelManager
 from models import Base, get_db, User, Prediction, Message, StudentMetrics, init_db
 from sqlalchemy.orm import Session
 from auth import get_password_hash, verify_password, create_access_token, get_current_user, require_admin
 from starlette.responses import StreamingResponse
 
+# ============================================================================
+# FastAPI Application Setup
+# ============================================================================
+
+# Create the main FastAPI application instance
 app = FastAPI(title="Student Performance Prediction API", version="1.0.0")
 
+# Enable CORS (Cross-Origin Resource Sharing) for frontend access
+# This allows our frontend (served from different domain) to call this API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["*"],          # Allow requests from any origin (for development)
+    allow_credentials=True,        # Allow cookies/auth headers
+    allow_methods=["*"],           # Allow all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],           # Allow all headers
 )
 
-# Initialize DB and model manager
-init_db()
-model_manager = ModelManager()
+# Initialize database (create tables if needed) and ML model manager
+init_db()  # Set up database tables and run migrations
+model_manager = ModelManager()  # Load or train the ML prediction model
 
-# API router under /api
+# Create API router with /api prefix for all endpoints
 api = APIRouter(prefix="/api")
 
+# ============================================================================
+# Pydantic Models (Request/Response Schemas)
+# ============================================================================
+# These define the structure of data sent to and from API endpoints
+# ============================================================================
+
 class PredictRequest(BaseModel):
-    study_hours: float
-    attendance: float
-    previous_marks: float
-    participation: float
-    internet_access: int
-    parental_education: int
+    """Request body for making a student performance prediction"""
+    study_hours: float           # Daily study hours (0-10+)
+    attendance: float            # Attendance percentage (0-100)
+    previous_marks: float        # Previous exam marks (0-100)
+    participation: float         # Class participation score (0-10)
+    internet_access: int         # Has internet at home (0=No, 1=Yes)
+    parental_education: int      # Parent education level (0-4)
 
 class PredictResponse(BaseModel):
-    prediction: int
-    label: str
-    probabilities: Optional[Dict[str, float]] = None
+    """Response body containing prediction results"""
+    prediction: int              # Binary result: 0=Fail, 1=Pass
+    label: str                   # Human-readable: "Pass" or "Fail"
+    probabilities: Optional[Dict[str, float]] = None  # {"0": 0.3, "1": 0.7}
 
 class TrainResponse(BaseModel):
-    best_model: str
-    metrics: Dict[str, float]
+    """Response after training a new ML model"""
+    best_model: str              # Name of best performing algorithm
+    metrics: Dict[str, float]    # Performance metrics (accuracy, F1, etc.)
 
 class StudentHomeResponse(BaseModel):
-    upcoming_exams: List[Dict[str, str]]
-    pass_probabilities: Dict[str, float]
-    suggestions: List[str]
+    """Data for student dashboard home page"""
+    upcoming_exams: List[Dict[str, str]]       # List of scheduled exams
+    pass_probabilities: Dict[str, float]       # Probability per exam
+    suggestions: List[str]                     # Personalized study tips
 
 class MessageIn(BaseModel):
-    to_user_id: int
-    text: str
+    """Request to send a message to another user"""
+    to_user_id: int              # Recipient's user ID
+    text: str                    # Message content
 
 class EstimateIn(BaseModel):
-    planned_hours: float
-    user_id: Optional[int] = None
+    """Request to estimate pass probability based on planned study hours"""
+    planned_hours: float         # Hours student plans to study
+    user_id: Optional[int] = None  # Optional: estimate for specific student (admin only)
 
 class AdminExportResponse(BaseModel):
-    students: List[Dict[str, Any]]
+    """Response containing all student data for admin export"""
+    students: List[Dict[str, Any]]  # List of student records with metrics
+
+# ============================================================================
+# AUTHENTICATION ENDPOINTS
+# ============================================================================
+# These endpoints handle user registration, login, and token management
+# ============================================================================
 
 @api.post("/auth/register")
 def register(username: str, password: str, db: Session = Depends(get_db)):
+    """
+    Register a new user account (student or administrator).
+    
+    The first registered user automatically becomes an administrator.
+    All subsequent users are created as students by default.
+    
+    Args:
+        username: Unique username for login
+        password: Plain-text password (will be hashed before storing)
+        db: Database session (injected)
+        
+    Returns:
+        Dict with user id and username
+        
+    Raises:
+        400: If username already exists
+    """
+    # Check if username is already taken
     if db.query(User).filter(User.username == username).first():
         raise HTTPException(status_code=400, detail="Username already exists")
-    # Bootstrap: if there is no administrator yet, first registered user becomes admin
+    
+    # Bootstrap logic: First user becomes admin, rest are students
     is_first_admin = db.query(User).filter(User.role == "administrator").first() is None
     role = "administrator" if is_first_admin else "student"
+    
+    # Create new user with hashed password
     user = User(username=username, password_hash=get_password_hash(password), role=role)
     db.add(user)
     db.commit()
     db.refresh(user)
+    
     return {"id": user.id, "username": user.username}
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 @api.post("/auth/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """
+    Authenticate a user and return a JWT access token.
+    
+    This endpoint verifies credentials and returns a token that the client
+    can use for subsequent authenticated requests.
+    
+    Args:
+        form_data: Standard OAuth2 form (username + password)
+        db: Database session (injected)
+        
+    Returns:
+        Dict with access_token, token_type, username, and role
+        
+    Raises:
+        400: If credentials are invalid
+    """
+    # Look up user by username
     user = db.query(User).filter(User.username == form_data.username).first()
+    
+    # Verify user exists and password matches
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(status_code=400, detail="Invalid credentials")
+    
+    # Create JWT token with user information
     token = create_access_token({"sub": user.username, "uid": user.id, "role": user.role})
+    
     return {"access_token": token, "token_type": "bearer", "username": user.username, "role": user.role}
 
 @api.post("/setup/promote")
@@ -101,24 +190,54 @@ def setup_promote(username: str, key: str, db: Session = Depends(get_db)):
     db.commit()
     return {"ok": True, "username": user.username, "role": user.role}
 
+# ============================================================================
+# PREDICTION ENDPOINTS
+# ============================================================================
+# Core ML prediction functionality for students and administrators
+# ============================================================================
+
 @api.post("/predict", response_model=PredictResponse)
 def predict(payload: PredictRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    Make a pass/fail prediction for a student based on their metrics.
+    
+    This is the core ML endpoint. It takes student features (study hours,
+    attendance, etc.) and returns a prediction with probability estimates.
+    All predictions are logged to the database for tracking.
+    
+    Args:
+        payload: Student metrics (study_hours, attendance, etc.)
+        db: Database session (injected)
+        current_user: Authenticated user making the request
+        
+    Returns:
+        PredictResponse with prediction (0/1), label (Pass/Fail), and probabilities
+    """
+    # Convert input to DataFrame for ML model
     df = pd.DataFrame([payload.dict()])
+    
+    # Get prediction from ML model
     pred, prob = model_manager.predict(df)
+    
+    # Convert binary prediction to human-readable label
     label = "Pass" if int(pred[0]) == 1 else "Fail"
 
-    # Log prediction
+    # Extract pass probability for logging
     proba_1 = None
     try:
         if isinstance(prob, list) and len(prob) > 0 and "1" in prob[0]:
-            proba_1 = float(prob[0]["1"])
+            proba_1 = float(prob[0]["1"])  # Probability of passing
     except Exception:
         proba_1 = None
+    
+    # Log this prediction to database for history tracking
     p = Prediction(user_id=current_user.id, features=df.to_json(), prediction=int(pred[0]), proba_1=proba_1)
     db.add(p)
     db.commit()
 
+    # Format probabilities for API response
     probs_fmt = {str(k): float(v) for k, v in (prob[0].items() if isinstance(prob, list) else prob.items())} if prob is not None else None
+    
     return {"prediction": int(pred[0]), "label": label, "probabilities": probs_fmt}
 
 @api.post("/train", response_model=TrainResponse)
@@ -134,8 +253,28 @@ def metrics():
 def me(current_user: User = Depends(get_current_user)):
     return {"id": current_user.id, "username": current_user.username, "role": current_user.role}
 
+# ============================================================================
+# STUDENT DASHBOARD ENDPOINTS
+# ============================================================================
+# Data endpoints for student dashboard views
+# ============================================================================
+
 @api.get("/student/summary")
 def student_summary(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Get a summary of the student's overall performance.
+    
+    Returns the student's average pass probability based on either:
+    1. Latest StudentMetrics record (if available), or
+    2. Average of recent predictions (fallback)
+    
+    Args:
+        current_user: Authenticated student
+        db: Database session
+        
+    Returns:
+        Dict with count of predictions and average pass_probability
+    """
     # Prefer latest StudentMetrics if available
     m = db.query(StudentMetrics).filter(StudentMetrics.user_id == current_user.id).order_by(StudentMetrics.created_at.desc()).first()
     if m and m.pass_probability is not None:
@@ -182,8 +321,27 @@ def student_metrics(current_user: User = Depends(get_current_user), db: Session 
         "created_at": m.created_at.isoformat(),
     }
 
+# ============================================================================
+# ADMIN DASHBOARD ENDPOINTS
+# ============================================================================
+# Management endpoints for administrators only
+# ============================================================================
+
 @api.get("/admin/export", response_model=AdminExportResponse)
 def admin_export(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    """
+    Export all student data for admin dashboard.
+    
+    Aggregates prediction history for all students, computing average
+    pass probabilities. Used by admin dashboard to display student list.
+    
+    Args:
+        db: Database session
+        admin: Authenticated administrator (access control)
+        
+    Returns:
+        AdminExportResponse with list of all students and their metrics
+    """
     users = db.query(User).filter(User.role == "student").all()
     items = []
     for u in users:
@@ -316,6 +474,32 @@ def admin_update_row_suggestion(metrics_id: int, body: SuggestionIn, db: Session
 
 @api.post("/admin/metrics/import")
 def admin_metrics_import(file: UploadFile = File(...), db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    """
+    Import student metrics from a CSV file.
+    
+    This is the main data import endpoint. It:
+    1. Parses CSV with flexible column names and delimiters
+    2. Matches usernames to existing student accounts
+    3. Trains simple ML models on the uploaded data
+    4. Predicts missing values (pass probability, next exam score)
+    5. Saves all records to StudentMetrics table
+    
+    Expected CSV columns (flexible naming):
+    - Username (required)
+    - Test 1, Test 2, Test 3 (scores 0-100)
+    - Attendance (percentage)
+    - Teacher Suggestions (optional feedback)
+    - Pass Probability (optional, will be predicted if missing)
+    - Predicted Next Exam (optional, will be predicted if missing)
+    
+    Args:
+        file: Uploaded CSV file
+        db: Database session
+        admin: Authenticated administrator
+        
+    Returns:
+        Dict with inserted count, total rows, and skipped user details
+    """
     # CSV columns (case-insensitive, flexible): Username, Test 1, Test 2, Test 3, Teacher Suggestions, Pass Probability, Predicted Next Exam
     # Robust parsing: auto-detect delimiter (comma/semicolon/tab), strip % symbols, accept integer percentages
     import csv, io as _io
@@ -562,8 +746,28 @@ def admin_student_summary(user_id: int, db: Session = Depends(get_db), admin: Us
         prob = (sum(1 for r in rows if r.prediction==1)/len(rows)) if rows else None
     return {"user": {"id": u.id, "username": u.username, "role": u.role}, "count": len(rows), "pass_probability": prob}
 
+# ============================================================================
+# MESSAGING ENDPOINTS
+# ============================================================================
+# Real-time communication between students and administrators
+# ============================================================================
+
 @api.get("/messages")
 def list_messages(with_user: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    Get all messages exchanged with a specific user.
+    
+    Returns the chat history between current user and another user.
+    Used by both student and admin chat interfaces.
+    
+    Args:
+        with_user: ID of the other user in the conversation
+        db: Database session
+        current_user: Authenticated user
+        
+    Returns:
+        List of message dictionaries with id, from_user_id, to_user_id, text, created_at
+    """
     # Only allow messages where current user is participant
     msgs = (
         db.query(Message)
@@ -696,17 +900,86 @@ def report(format: str = "csv", db: Session = Depends(get_db), current_user: Use
     headers = {"Content-Disposition": f"attachment; filename=report.csv"}
     return StreamingResponse(iter([stream.getvalue()]), media_type="text/csv", headers=headers)
 
+# ============================================================================
+# UTILITY ENDPOINTS
+# ============================================================================
+
 @api.get("/")
 def api_root():
-    return {"message": "Student Performance Prediction API", "endpoints": ["/api/auth/register", "/api/auth/login", "/api/predict", "/api/train", "/api/metrics", "/api/bulk_predict", "/api/report"]}
+    """
+    API root endpoint - provides basic info and available endpoints.
+    
+    This is a health check and documentation endpoint that shows
+    the API is running and lists key endpoints.
+    """
+    return {
+        "message": "Student Performance Prediction API", 
+        "endpoints": [
+            "/api/auth/register", 
+            "/api/auth/login", 
+            "/api/predict", 
+            "/api/train", 
+            "/api/metrics", 
+            "/api/bulk_predict", 
+            "/api/report"
+        ]
+    }
 
-# Include API router first
+# ============================================================================
+# APPLICATION STARTUP
+# ============================================================================
+
+# Include API router (all endpoints under /api prefix)
 app.include_router(api)
 
-# Add a root endpoint for health check
+# Root endpoint for health checks and basic info
 @app.get("/")
 def root():
-    return {"message": "MarkMate API Server", "status": "running", "api_docs": "/docs", "api_root": "/api"}
+    """
+    Root endpoint - health check and API information.
+    
+    Returns basic server status and links to documentation.
+    """
+    return {
+        "message": "MarkMate API Server", 
+        "status": "running", 
+        "api_docs": "/docs",      # FastAPI auto-generated docs
+        "api_root": "/api"         # All API endpoints start here
+    }
+
+# ============================================================================
+# DATABASE RESET ENDPOINT (for development/testing)
+# ============================================================================
+
+@app.post("/reset-database")
+def reset_database(secret_key: str):
+    """
+    Reset the entire database - drops all tables and recreates them.
+    
+    WARNING: This deletes ALL data! Use only for testing/development.
+    Requires a secret key for security.
+    
+    Args:
+        secret_key: Must be "reset123" to proceed
+    """
+    # Simple security check
+    if secret_key != "reset123":
+        raise HTTPException(status_code=403, detail="Invalid secret key")
+    
+    try:
+        # Drop all tables
+        Base.metadata.drop_all(bind=engine)
+        
+        # Recreate all tables
+        Base.metadata.create_all(bind=engine)
+        
+        return {
+            "message": "Database reset successful", 
+            "status": "All tables dropped and recreated",
+            "next_step": "Register a new admin user at /api/auth/register"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Reset failed: {str(e)}")
 
 # Mount frontend as static site (but this won't work on Render since we're API-only)
 # FRONTEND_DIR = str((Path(__file__).resolve().parent.parent / "frontend").resolve())
