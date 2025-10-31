@@ -546,8 +546,17 @@ def admin_metrics_import(file: UploadFile = File(...), db: Session = Depends(get
             # Try by full_name
             u = db.query(User).filter(User.full_name == username).first()
         if not u:
-            skipped_users.append({"username": username, "reason": "User not found in database"})
-            continue
+            # Auto-create student account with default password
+            default_password = "student123"  # Students can change this later
+            u = User(
+                username=username,
+                password_hash=get_password_hash(default_password),
+                role="student",
+                full_name=username
+            )
+            db.add(u)
+            db.commit()
+            db.refresh(u)
         def to_float(v):
             try:
                 if v is None:
