@@ -29,10 +29,10 @@ import os
 from pathlib import Path
 
 # Our custom modules
-from ml.pipeline import ModelManager
-from models import Base, get_db, User, Prediction, Message, StudentMetrics, init_db
+from backend.ml.pipeline import ModelManager
+from backend.models import Base, get_db, User, Prediction, Message, StudentMetrics, init_db
 from sqlalchemy.orm import Session
-from auth import get_password_hash, verify_password, create_access_token, get_current_user, require_admin
+from backend.auth import get_password_hash, verify_password, create_access_token, get_current_user, require_admin
 from starlette.responses import StreamingResponse
 
 # ============================================================================
